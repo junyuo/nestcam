@@ -3,43 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>雙視窗 YouTube 播放</title>
+  <title>雙視窗 YouTube 播放 (預設 1080p)</title>
   <style>
-    /* 100% 滿版、左右各佔 50%*/
-    html,body{
-      margin:0;
-      padding:0;
-    }
-    .wrapper{
-      display:flex;
-      flex-direction:row;
-      min-height:100vh;   /* 讓畫面總高度至少滿版 */
-    }
+    /* ── 版面配置 ───────────────────────────── */
+    html,body{margin:0;padding:0;}
+    .wrapper{display:flex;flex-direction:row;min-height:100vh;}
     .wrapper iframe{
-      flex:1 1 50%;       /* 每支影片平均分配寬度 */
-      width:50%;          /* 確保左右各半 */
-      height:100vh;       /* 高度撐滿視窗，可依需求改為 56.25vw 保持 16:9 */
+      flex:1 1 50%;           /* 左右平均 */
+      width:50%;              /* 確保各半 */
+      height:100vh;           /* 高度滿版 */
       border:none;
     }
-    /* 行動裝置直向顯示時，改為上下排列 */
-    @media (max-width: 768px){
-      .wrapper{
-        flex-direction:column;
-      }
-      .wrapper iframe{
-        width:100%;
-        height:50vh;
-      }
+    /* ── RWD：窄螢幕改為上下堆疊 ─────────────── */
+    @media(max-width:768px){
+      .wrapper{flex-direction:column;}
+      .wrapper iframe{width:100%;height:50vh;}
     }
   </style>
 </head>
 <body>
   <div class="wrapper">
     <!-- 影片 1 -->
-    <iframe src="https://www.youtube.com/embed/DSxlbhlfApw?si=z8U44ImujdgmhGeC" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe id="player1"
+            src="https://www.youtube.com/embed/DSxlbhlfApw?enablejsapi=1&playsinline=1"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
 
     <!-- 影片 2 -->
-    <iframe src="https://www.youtube.com/embed/v6IjcaZekQU?si=QUs5VoEcLeTV4cd_" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe id="player2"
+            src="https://www.youtube.com/embed/v6IjcaZekQU?enablejsapi=1&playsinline=1"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
   </div>
+
+  <!-- 讀取 YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    /*
+     * 建立播放器並在 onReady 時嘗試鎖定 1080p
+     * OS / 網速 / 影片本身 若無 1080p 流，YouTube 仍會自動降畫質
+     */
+    const wantQuality = 'hd1080';
+    const playerIds = ['player1', 'player2'];
+    const players = {};
+
+    function onYouTubeIframeAPIReady(){
+      playerIds.forEach(id => {
+        players[id] = new YT.Player(id, {
+          events: { onReady: e => setPreferredQuality(e.target) }
+        });
+      });
+    }
+
+    function setPreferredQuality(player){
+      const levels = player.getAvailableQualityLevels();
+      if(levels && levels.includes(wantQuality)){
+        player.setPlaybackQuality(wantQuality);
+      }
+    }
+  </script>
 </body>
 </html>
